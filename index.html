@@ -11,322 +11,232 @@
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+:root { --neon: #00d2ff; --bg: #02040a; }
+* { -webkit-tap-highlight-color: transparent; user-select: none; touch-action: manipulation; }
+body { margin: 0; background: var(--bg); color: #fff; font-family: 'Orbitron', sans-serif; overflow: hidden; height: 100vh; }
 
-:root{
-  --neon:#00d2ff;
-  --bg:#02040a;
+.glass { background: rgba(255,255,255,0.05); border: 1px solid rgba(0,210,255,0.2); border-radius: 20px; }
+.btn-neon { background: var(--neon); color: #000; font-weight: 900; border-radius: 12px; }
+
+/* Секретний екран */
+#secretScreen { 
+    position: fixed; inset: 0; background: #000; z-index: 500; 
+    display: none; flex-direction: column; padding: 20px;
 }
 
-/* Блокуємо зум, щоб тапало ідеально */
-* {
-  -webkit-tap-highlight-color: transparent;
-  user-select: none;
-  touch-action: none;
+/* Модалка завдань та апгрейдів */
+#hubModal {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 400;
+    display: none; flex-direction: column; padding: 20px;
 }
 
-body{
-  margin:0;
-  background:radial-gradient(circle at 50% 30%, #0b2a44, var(--bg));
-  color:#fff;
-  font-family:'Orbitron',sans-serif;
-  overflow:hidden;
-  height: 100vh;
+.tap-text {
+    position: absolute; color: var(--neon); font-weight: 900; pointer-events: none;
+    animation: float 0.7s forwards; font-size: 1.5rem; text-shadow: 0 0 10px var(--neon);
 }
+@keyframes float { to { transform: translateY(-100px); opacity: 0; } }
 
-.viewport{position:relative;height:55vh;overflow:hidden; touch-action: none;}
-
-.cyber-floor{
-  position:absolute;bottom:-60%;left:-50%;
-  width:200%;height:200%;
-  background:
-    linear-gradient(var(--neon) 1px, transparent 1px),
-    linear-gradient(90deg,var(--neon) 1px, transparent 1px);
-  background-size:80px 80px;
-  opacity:.15;transform:rotateX(70deg);
-}
-
-.hero-wrap{
-  position:absolute;bottom:6%;left:50%;
-  transform:translateX(-50%);
-  filter:drop-shadow(0 0 40px var(--neon));
-  transition: transform 0.05s;
-}
-#hero{height:45vh;animation:idle 3s ease-in-out infinite; pointer-events: none;}
-@keyframes idle{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
-
-.tap-text{
-  position:absolute;font-size:2.2rem;font-weight:900;
-  color:var(--neon);pointer-events:none;
-  animation:float .6s forwards; z-index: 100;
-}
-@keyframes float{to{transform:translateY(-180px) scale(1.4);opacity:0}}
-
-/* Секретний екран та меню */
-.modal-full {
-  position:fixed;inset:0;background:rgba(0,0,0,0.95);
-  backdrop-filter: blur(10px); z-index: 1000;
-  display:none; flex-direction: column; padding: 25px;
-}
-
-.upgrade-panel{
-  background:#0b1a2a; border: 1px solid var(--neon); border-radius:2rem;
-  width:100%; max-width:520px; padding:1.5rem; margin: auto;
-  max-height: 80vh; overflow-y: auto;
-}
-
-.upgrade-card{
-  background:#05111f; padding:1rem; border-radius:1.5rem;
-  display:flex; justify-content:space-between; align-items:center;
-  margin-bottom:1rem; border: 1px solid rgba(0,210,255,0.1);
-}
-
-.upgrade-card button{
-  background:var(--neon); color:black; font-weight:bold;
-  border-radius:1rem; padding:0.4rem 1rem;
-}
-
-.task-card {
-  border:1px dashed var(--neon); padding:0.8rem;
-  border-radius:1.2rem; margin-bottom:0.8rem;
-  display: flex; justify-content: space-between; align-items: center;
-}
-
-.close-x { font-size: 2.5rem; color: #ff4444; cursor: pointer; line-height: 1; }
+#ton-connect-button { margin: 0 auto; }
 </style>
 </head>
 <body>
 
-<header class="p-6 flex justify-between items-center">
-  <div onclick="openScreen('secretScreen')" class="cursor-pointer">
-    <h1 class="text-2xl font-black text-cyan-400">Matisov X</h1>
-    <div id="lvlTag" class="text-[9px] bg-cyan-900 px-2 py-0.5 rounded text-cyan-300">LVL 1 • RECRUIT</div>
-  </div>
-  <div class="text-right">
-    <div class="text-xs text-blue-400 uppercase">Balance</div>
-    <div class="text-3xl font-black">
-      <span id="balDisplay">0</span>
-    </div>
-  </div>
-</header>
-
-<main class="viewport" id="tapZone">
-  <div class="cyber-floor"></div>
-  <div class="hero-wrap" id="heroContainer">
-    <img id="hero" src="https://raw.githubusercontent.com/CUBERIONAI/Matisov-X/main/file_0000000008b471f48ebdb6f35b1b1a5a.png">
-  </div>
-</main>
-
-<div class="px-6 -mt-10">
-  <div class="bg-black/60 rounded-3xl p-5 border border-white/10">
-    <div class="flex justify-between text-xs mb-2 font-bold">
-      <span class="text-cyan-400">⚡ Energy Source</span>
-      <span id="energyText">1000 / 1000</span>
-    </div>
-    <div class="h-3 bg-black rounded-full overflow-hidden">
-      <div id="energyBar" class="h-full bg-cyan-400 shadow-[0_0_15px_#00d2ff]"></div>
-    </div>
-  </div>
-  <div class="grid grid-cols-2 gap-4 mt-4">
-    <button onclick="openScreen('upgradeMenu')" class="bg-cyan-500 text-black py-4 rounded-2xl font-black uppercase text-xs">Hub & Upgrades</button>
-    <button onclick="openScreen('secretScreen')" class="bg-white/10 py-4 rounded-2xl font-black uppercase text-xs border border-white/20">Profile</button>
-  </div>
-</div>
-
-<div id="secretScreen" class="modal-full">
-  <div class="flex justify-between items-center mb-6">
-    <h2 class="text-cyan-400 font-black text-xl tracking-widest uppercase">Cyber Profile</h2>
-    <div onclick="closeScreen('secretScreen')" class="close-x">✕</div>
-  </div>
-
-  <div class="flex flex-col items-center mb-8">
-    <img id="uAvatar" src="" class="w-24 h-24 rounded-full border-4 border-cyan-400 p-1 mb-4">
-    <h3 id="uName" class="text-xl font-black uppercase">GUEST</h3>
-    <p id="uRank" class="text-[10px] text-cyan-400">RANK: RECRUIT</p>
-  </div>
-
-  <div id="ton-connect-button" class="flex justify-center mb-6"></div>
-
-  <div class="space-y-4">
-    <div class="upgrade-card">
-        <div><p class="text-[10px] opacity-50">TON WALLET</p><p id="tonStatus" class="text-xs font-bold text-red-500">Disconnected</p></div>
-        <button onclick="TG.showAlert('Deposit TON system integrated')">Refill</button>
-    </div>
-    <div class="glass p-4 rounded-2xl bg-white/5 border border-white/10">
-        <p class="text-[10px] text-center mb-2 opacity-50 uppercase">Next Level Progress</p>
-        <div class="h-1 bg-gray-800 rounded-full overflow-hidden">
-            <div id="lvlBar" class="h-full bg-cyan-400" style="width: 0%"></div>
+<div id="gameUI" class="flex flex-col h-screen p-6">
+    <header class="flex justify-between items-center mb-4">
+        <div onclick="openSecret()" class="cursor-pointer">
+            <h1 class="text-xl font-black text-cyan-400">MATISOV X</h1>
+            <span id="lvlTag" class="text-[10px] bg-cyan-900 px-2 py-0.5 rounded">LVL 1</span>
         </div>
+        <div class="text-right">
+            <div class="text-[10px] opacity-60">BALANCE</div>
+            <div id="balText" class="text-2xl font-black">0</div>
+        </div>
+    </header>
+
+    <div class="flex-grow relative flex items-center justify-center" id="tapArea">
+        <img id="hero" src="https://raw.githubusercontent.com/CUBERIONAI/Matisov-X/main/file_0000000008b471f48ebdb6f35b1b1a5a.png" class="h-[45vh] transition-transform duration-75">
     </div>
-  </div>
+
+    <footer class="space-y-4">
+        <div class="glass p-4">
+            <div class="flex justify-between text-[10px] mb-1"><span>ENERGY</span><span id="eneText">1000/1000</span></div>
+            <div class="h-1.5 bg-gray-800 rounded-full overflow-hidden"><div id="eneBar" class="h-full bg-cyan-400"></div></div>
+        </div>
+        <button onclick="openHub()" class="w-full btn-neon py-4 text-sm tracking-widest uppercase">Upgrades & Tasks</button>
+    </footer>
 </div>
 
-<div id="upgradeMenu" class="modal-full">
-  <div class="upgrade-panel">
-    <div class="flex justify-between items-center mb-6">
-      <h2 class="text-cyan-400 text-2xl font-black uppercase">Cyber Hub</h2>
-      <div onclick="closeScreen('upgradeMenu')" class="close-x">✕</div>
+<div id="secretScreen">
+    <div class="flex justify-between mb-8">
+        <h2 class="text-cyan-400 font-black">CYBER PROFILE</h2>
+        <button onclick="closeSecret()" class="text-2xl font-bold">✕</button>
+    </div>
+    
+    <div class="flex flex-col items-center mb-10">
+        <img id="uAvatar" src="" class="w-20 h-20 rounded-full border-2 border-cyan-400 mb-2">
+        <div id="uName" class="font-black text-lg">GUEST</div>
     </div>
 
-    <div class="space-y-4">
-      <h3 class="text-xs font-bold text-white/40 uppercase tracking-widest border-b border-white/10 pb-1">Missions (1M MX each)</h3>
-      <div id="missionList"></div>
-
-      <h3 class="text-xs font-bold text-white/40 uppercase tracking-widest border-b border-white/10 pb-1 mt-6">Upgrades</h3>
-      <div id="upgList"></div>
+    <div id="ton-connect-button"></div>
+    
+    <div class="mt-10 space-y-4">
+        <div class="glass p-4 flex justify-between"><span>TON BALANCE</span><span id="tonBal">0.00</span></div>
+        <button onclick="window.location.reload()" class="w-full text-xs opacity-50">SYNC DATA</button>
     </div>
-  </div>
+</div>
+
+<div id="hubModal">
+    <div class="flex justify-between mb-6">
+        <h2 class="text-cyan-400 font-black">HUB</h2>
+        <button onclick="closeHub()" class="text-2xl">✕</button>
+    </div>
+
+    <div class="overflow-y-auto space-y-6">
+        <section>
+            <h3 class="text-[10px] text-gray-400 mb-3 tracking-widest">TASKS (VERIFIED)</h3>
+            <div id="taskList" class="space-y-2"></div>
+        </section>
+
+        <section>
+            <h3 class="text-[10px] text-gray-400 mb-3 tracking-widest">CYBER UPGRADES</h3>
+            <div id="upgList" class="space-y-2"></div>
+        </section>
+    </div>
 </div>
 
 <script>
-const TG = Telegram.WebApp;
-const UID = TG.initDataUnsafe?.user?.id || "local";
+const TG = window.Telegram.WebApp;
+const UID = TG.initDataUnsafe?.user?.id || "guest";
 TG.expand();
 
+// TON Connect Init
 const tonConnectUI = new TONConnectUI.TonConnectUI({
     manifestUrl: 'https://raw.githubusercontent.com/ton-connect/demo-dapp/main/public/tonconnect-manifest.json',
     buttonRootId: 'ton-connect-button'
 });
 
 let state = {
-  bal: parseInt(localStorage.getItem(`mx_b_${UID}`)) || 0,
-  lvl: parseInt(localStorage.getItem(`mx_l_${UID}`)) || 1,
-  e: 1000,
-  swd: parseInt(localStorage.getItem(`mx_s_${UID}`)) || 0,
-  hnd: parseInt(localStorage.getItem(`mx_h_${UID}`)) || 0,
-  tasks: JSON.parse(localStorage.getItem(`mx_t_${UID}`)) || []
+    bal: parseInt(localStorage.getItem('mx_bal_'+UID)) || 0,
+    e: 1000,
+    lvl: 1,
+    hnd: parseInt(localStorage.getItem('mx_hnd_'+UID)) || 0,
+    swd: parseInt(localStorage.getItem('mx_swd_'+UID)) || 0,
+    ton_connected: localStorage.getItem('mx_ton_con_'+UID) === 'true',
+    tasks: JSON.parse(localStorage.getItem('mx_tsk_'+UID)) || []
 };
 
-const MISSIONS = [
-    { id: 'm1', title: 'Join Channel', reward: 1000000, url: 'https://t.me/Matisov_X' },
-    { id: 'm2', title: 'Join Chat', reward: 1000000, url: 'https://t.me/MatisovX' },
-    { id: 'm3', title: 'YouTube Sub', reward: 1000000, url: 'https://www.youtube.com/@MatisovX' },
-    { id: 'm4', title: 'Instagram', reward: 1000000, url: 'https://www.instagram.com/matisov.x' },
-    { id: 'm5', title: 'Follow X', reward: 1000000, url: 'https://x.com/matisovx' },
-    { id: 'ton', title: 'Connect Wallet', reward: 100000, url: '#' }
+const TASKS = [
+    { id: 'tg_ch', title: 'Join Channel', reward: 1000000, link: 'https://t.me/Matisov_X' },
+    { id: 'tg_group', title: 'Join Chat', reward: 1000000, link: 'https://t.me/MatisovX' },
+    { id: 'yt', title: 'Subscribe YouTube', reward: 1000000, link: 'https://youtube.com/@MatisovX' },
+    { id: 'ton_con', title: 'Connect TON Wallet', reward: 100000, link: '#' }
 ];
 
 function save() {
-  localStorage.setItem(`mx_b_${UID}`, state.bal);
-  localStorage.setItem(`mx_l_${UID}`, state.lvl);
-  localStorage.setItem(`mx_s_${UID}`, state.swd);
-  localStorage.setItem(`mx_h_${UID}`, state.hnd);
-  localStorage.setItem(`mx_t_${UID}`, JSON.stringify(state.tasks));
+    localStorage.setItem('mx_bal_'+UID, state.bal);
+    localStorage.setItem('mx_hnd_'+UID, state.hnd);
+    localStorage.setItem('mx_swd_'+UID, state.swd);
+    localStorage.setItem('mx_tsk_'+UID, JSON.stringify(state.tasks));
 }
 
 function render() {
-  const nextLvl = Math.floor(100000 * Math.pow(2, state.lvl - 1));
-  if(state.bal >= nextLvl) { state.bal -= nextLvl; state.lvl++; TG.HapticFeedback.notificationOccurred('success'); }
-
-  const maxE = 1000 + (state.hnd * 200);
-  balDisplay.textContent = state.bal.toLocaleString();
-  energyText.textContent = `${Math.floor(state.e)} / ${maxE}`;
-  energyBar.style.width = (state.e / maxE * 100) + "%";
-  
-  const ranks = ["Recruit", "Warrior", "Samurai", "Cyber Ronin", "Shogun", "Matisov Chosen"];
-  const rName = ranks[Math.min(state.lvl - 1, 5)];
-  lvlTag.textContent = `LVL ${state.lvl} • ${rName}`;
-  uRank.textContent = `RANK: ${rName}`;
-  uLvlBadge.textContent = `LVL ${state.lvl}`;
-  lvlBar.style.width = (state.bal / nextLvl * 100) + "%";
-
-  if(TG.initDataUnsafe?.user) {
-    uName.textContent = (TG.initDataUnsafe.user.username || TG.initDataUnsafe.user.first_name).toUpperCase();
-    uAvatar.src = TG.initDataUnsafe.user.photo_url || '';
-  }
+    document.getElementById('balText').textContent = state.bal.toLocaleString();
+    document.getElementById('eneText').textContent = `${state.e}/${1000 + (state.hnd * 200)}`;
+    document.getElementById('eneBar').style.width = (state.e / (1000 + (state.hnd * 200)) * 100) + "%";
+    
+    if(TG.initDataUnsafe?.user) {
+        document.getElementById('uName').textContent = TG.initDataUnsafe.user.first_name;
+        document.getElementById('uAvatar').src = TG.initDataUnsafe.user.photo_url || '';
+    }
 }
 
-// Клікер - працює для 5 пальців
-document.getElementById('tapZone').addEventListener('touchstart', (e) => {
-  e.preventDefault();
-  const maxE = 1000 + (state.hnd * 200);
-  if(state.e < 1) return;
-
-  Array.from(e.changedTouches).forEach(touch => {
-    if(state.e < 1) return;
-    state.e--;
-    const gain = 1 + state.swd;
-    state.bal += gain;
-
-    const t = document.createElement("div");
-    t.className = "tap-text";
-    t.style.left = touch.clientX + "px";
-    t.style.top = touch.clientY + "px";
-    t.textContent = "+" + gain;
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 600);
-  });
-
-  const hero = document.getElementById('heroContainer');
-  hero.style.transform = 'translateX(-50%) scale(0.95)';
-  setTimeout(() => hero.style.transform = 'translateX(-50%) scale(1)', 50);
-
-  render(); save();
-  TG.HapticFeedback.impactOccurred('medium');
-}, {passive: false});
-
-function openScreen(id) { 
-    document.getElementById(id).style.display = 'flex'; 
-    if(id === 'upgradeMenu') renderHub();
-}
-function closeScreen(id) { document.getElementById(id).style.display = 'none'; }
-
-function renderHub() {
-    const list = document.getElementById('missionList');
-    list.innerHTML = MISSIONS.map(m => {
-        const done = state.tasks.includes(m.id);
+// Logic: Tasks
+function openHub() {
+    document.getElementById('hubModal').style.display = 'flex';
+    const list = document.getElementById('taskList');
+    list.innerHTML = TASKS.map(t => {
+        const isDone = state.tasks.includes(t.id);
         return `
-        <div class="task-card">
-            <div><p class="text-xs font-bold uppercase">${m.title}</p><p class="text-[9px] text-green-400">+${m.reward.toLocaleString()}</p></div>
-            ${done ? '<span class="text-green-500 text-xs font-bold">✓</span>' : `<button onclick="doTask('${m.id}')" class="bg-white text-black text-[10px] px-3 py-1 rounded-lg font-bold">GO</button>`}
+        <div class="glass p-3 flex justify-between items-center">
+            <div><div class="text-xs font-bold">${t.title}</div><div class="text-[9px] text-green-400">+${t.reward.toLocaleString()} MX</div></div>
+            ${isDone ? '<span class="text-green-500 text-xs">✔</span>' : 
+            `<button onclick="verifyTask('${t.id}')" class="bg-white text-black text-[10px] px-3 py-1 rounded-full font-bold">GO</button>`}
         </div>`;
     }).join('');
-
-    const ulist = document.getElementById('upgList');
-    const upgs = [
-        { id: 'swd', name: 'Sword Power', cost: 5000 * (state.swd + 1) },
-        { id: 'hnd', name: 'Cyber Organs', cost: 10000 * (state.hnd + 1) }
-    ];
-    ulist.innerHTML = upgs.map(u => `
-        <div class="upgrade-card">
-            <div><p class="text-xs font-bold uppercase">${u.name}</p><p class="text-[9px] opacity-50">Level ${state[u.id]}</p></div>
-            <button onclick="buyUpgrade('${u.id}', ${u.cost})">${u.cost.toLocaleString()}</button>
-        </div>`).join('');
 }
 
-function doTask(id) {
-    const t = MISSIONS.find(m => m.id === id);
-    if(id === 'ton') {
-        if(tonConnectUI.connected) claimTask(id, t.reward);
-        else TG.showAlert("Connect TON wallet in Profile first!");
+function verifyTask(id) {
+    const task = TASKS.find(t => t.id === id);
+    if(id === 'ton_con') {
+        if(tonConnectUI.connected) {
+            claimTask(id, task.reward);
+        } else {
+            TG.showAlert("Please connect your wallet in Profile first!");
+        }
     } else {
-        TG.openLink(t.url);
+        TG.openLink(task.link);
+        // Імітація перевірки через "Verification"
         setTimeout(() => {
-            TG.showConfirm("Check subscription: Done?", (ok) => { if(ok) claimTask(id, t.reward); });
+            TG.showConfirm("Did you subscribe?", (ok) => {
+                if(ok) claimTask(id, task.reward);
+            });
         }, 2000);
     }
 }
 
 function claimTask(id, reward) {
-    if(!state.tasks.includes(id)) { state.tasks.push(id); state.bal += reward; save(); render(); renderHub(); }
+    if(!state.tasks.includes(id)) {
+        state.tasks.push(id);
+        state.bal += reward;
+        save(); render(); openHub();
+        TG.HapticFeedback.notificationOccurred('success');
+    }
 }
 
-function buyUpgrade(id, cost) {
-    if(state.bal >= cost) { state.bal -= cost; state[id]++; save(); render(); renderHub(); TG.HapticFeedback.notificationOccurred('success'); }
-}
+// Logic: Taps
+document.getElementById('tapArea').addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    if(state.e <= 0) return;
+    
+    Array.from(e.changedTouches).forEach(touch => {
+        state.e--;
+        const gain = 1 + state.swd;
+        state.bal += gain;
+        
+        const txt = document.createElement('div');
+        txt.className = 'tap-text';
+        txt.style.left = touch.clientX + 'px';
+        txt.style.top = touch.clientY + 'px';
+        txt.textContent = `+${gain}`;
+        document.body.appendChild(txt);
+        setTimeout(() => txt.remove(), 700);
+        
+        document.getElementById('hero').style.transform = 'scale(0.95)';
+        setTimeout(() => document.getElementById('hero').style.transform = 'scale(1)', 50);
+    });
+    render(); save();
+    TG.HapticFeedback.impactOccurred('medium');
+});
+
+// Navigation
+function openSecret() { document.getElementById('secretScreen').style.display = 'flex'; }
+function closeSecret() { document.getElementById('secretScreen').style.display = 'none'; }
+function closeHub() { document.getElementById('hubModal').style.display = 'none'; }
+
+// Wallet Sync
+tonConnectUI.onStatusChange(wallet => {
+    if (wallet) {
+        state.ton_connected = true;
+        localStorage.setItem('mx_ton_con_'+UID, 'true');
+    }
+});
 
 setInterval(() => {
     const max = 1000 + (state.hnd * 200);
-    if(state.e < max) { state.e = Math.min(max, state.e + (1 + state.hnd)); render(); }
-}, 1000);
-
-tonConnectUI.onStatusChange(wallet => {
-    const s = document.getElementById('tonStatus');
-    if(wallet) { s.textContent = "Connected"; s.className = "text-xs font-bold text-green-400"; }
-});
+    if(state.e < max) { state.e = Math.min(max, state.e + 3); render(); }
+}, 1500);
 
 render();
 </script>
-
 </body>
-    </html>
-    
+</html>
