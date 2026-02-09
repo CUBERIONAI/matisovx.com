@@ -6,237 +6,377 @@
 <title>Matisov X — Cyber Samurai</title>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
 <script src="https://cdn.tailwindcss.com"></script>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
-:root { --neon: #00d2ff; --bg: #02040a; }
+
+:root { --neon: #00d2ff; --bg: #02040a; --gold: #f59e0b; }
+
 * { -webkit-tap-highlight-color: transparent; user-select: none; touch-action: manipulation; }
-body { margin: 0; background: var(--bg); color: #fff; font-family: 'Orbitron', sans-serif; overflow: hidden; height: 100vh; }
 
-.glass { background: rgba(255,255,255,0.05); border: 1px solid rgba(0,210,255,0.2); border-radius: 20px; }
-.btn-neon { background: var(--neon); color: #000; font-weight: 900; border-radius: 12px; }
+body {
+  margin: 0; background: radial-gradient(circle at 50% 30%, #0b2a44, var(--bg));
+  color: #fff; font-family: 'Orbitron', sans-serif; overflow: hidden; height: 100vh;
+}
 
-/* Секретний екран */
+/* Экраны */
+#gameScreen { display: flex; flex-direction: column; height: 100vh; transition: filter 0.3s; }
 #secretScreen { 
-    position: fixed; inset: 0; background: #000; z-index: 500; 
-    display: none; flex-direction: column; padding: 20px;
+    position: fixed; inset: 0; background: rgba(2, 4, 10, 0.95); 
+    backdrop-filter: blur(15px); z-index: 200; display: none; 
+    flex-direction: column; padding: 20px; animation: slideUp 0.4s ease;
 }
 
-/* Модалка завдань та апгрейдів */
-#hubModal {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 400;
-    display: none; flex-direction: column; padding: 20px;
-}
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
+/* Визуал героя */
+.viewport { position: relative; flex-grow: 1; overflow: hidden; cursor: pointer; }
+.cyber-floor {
+  position: absolute; bottom: -60%; left: -50%; width: 200%; height: 200%;
+  background: linear-gradient(var(--neon) 1px, transparent 1px), linear-gradient(90deg, var(--neon) 1px, transparent 1px);
+  background-size: 80px 80px; opacity: .1; transform: rotateX(70deg);
+}
+.hero-wrap {
+  position: absolute; bottom: 15%; left: 50%; transform: translateX(-50%);
+  filter: drop-shadow(0 0 30px var(--neon)); transition: transform 0.05s;
+}
+#hero { height: 40vh; animation: idle 3s ease-in-out infinite; pointer-events: none; }
+@keyframes idle { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-10px) scale(1.02); } }
+
+/* FX */
 .tap-text {
-    position: absolute; color: var(--neon); font-weight: 900; pointer-events: none;
-    animation: float 0.7s forwards; font-size: 1.5rem; text-shadow: 0 0 10px var(--neon);
+  position: absolute; font-size: 1.8rem; font-weight: 900; color: var(--neon);
+  pointer-events: none; animation: floatUp 0.6s ease-out forwards; z-index: 100;
+  text-shadow: 0 0 10px var(--neon);
 }
-@keyframes float { to { transform: translateY(-100px); opacity: 0; } }
+@keyframes floatUp { to { transform: translateY(-120px) rotate(10deg); opacity: 0; } }
 
-#ton-connect-button { margin: 0 auto; }
+/* UI элементы */
+.glass-panel { background: rgba(255,255,255,0.05); border: 1px solid rgba(0,210,255,0.2); border-radius: 20px; padding: 15px; }
+.btn-neon { background: var(--neon); color: #000; font-weight: 900; border-radius: 12px; transition: transform 0.1s; }
+.btn-neon:active { transform: scale(0.95); }
+
+/* Scrollbar */
+.overflow-y-auto::-webkit-scrollbar { width: 4px; }
+.overflow-y-auto::-webkit-scrollbar-thumb { background: var(--neon); border-radius: 10px; }
 </style>
 </head>
 <body>
 
-<div id="gameUI" class="flex flex-col h-screen p-6">
-    <header class="flex justify-between items-center mb-4">
-        <div onclick="openSecret()" class="cursor-pointer">
-            <h1 class="text-xl font-black text-cyan-400">MATISOV X</h1>
-            <span id="lvlTag" class="text-[10px] bg-cyan-900 px-2 py-0.5 rounded">LVL 1</span>
+<div id="gameScreen">
+    <header class="p-6 flex justify-between items-center">
+        <div onclick="toggleSecret(true)" class="cursor-pointer">
+            <h1 class="text-xl font-black text-cyan-400 tracking-tighter">MATISOV X</h1>
+            <div class="flex items-center gap-1">
+                <span id="headerLevel" class="text-[9px] text-white opacity-60">LVL 1</span>
+                <div class="w-12 h-1 bg-gray-800 rounded-full"><div id="headerProgress" class="h-full bg-cyan-400 w-0"></div></div>
+            </div>
         </div>
         <div class="text-right">
-            <div class="text-[10px] opacity-60">BALANCE</div>
-            <div id="balText" class="text-2xl font-black">0</div>
+            <div class="text-[10px] text-blue-400 uppercase font-bold">Balance</div>
+            <div class="text-2xl font-black text-white" id="mainBal">0</div>
         </div>
     </header>
 
-    <div class="flex-grow relative flex items-center justify-center" id="tapArea">
-        <img id="hero" src="https://raw.githubusercontent.com/CUBERIONAI/Matisov-X/main/file_0000000008b471f48ebdb6f35b1b1a5a.png" class="h-[45vh] transition-transform duration-75">
-    </div>
-
-    <footer class="space-y-4">
-        <div class="glass p-4">
-            <div class="flex justify-between text-[10px] mb-1"><span>ENERGY</span><span id="eneText">1000/1000</span></div>
-            <div class="h-1.5 bg-gray-800 rounded-full overflow-hidden"><div id="eneBar" class="h-full bg-cyan-400"></div></div>
+    <main class="viewport" id="tapZone">
+        <div class="cyber-floor"></div>
+        <div class="hero-wrap" id="heroContainer">
+            <img id="hero" src="https://raw.githubusercontent.com/CUBERIONAI/Matisov-X/main/file_0000000008b471f48ebdb6f35b1b1a5a.png">
         </div>
-        <button onclick="openHub()" class="w-full btn-neon py-4 text-sm tracking-widest uppercase">Upgrades & Tasks</button>
+    </main>
+
+    <footer class="p-6 space-y-4">
+        <div class="glass-panel">
+            <div class="flex justify-between text-[10px] mb-1 font-bold">
+                <span class="text-cyan-400">⚡ ENERGY</span>
+                <span id="energyText">1000 / 1000</span>
+            </div>
+            <div class="h-2 bg-gray-900 rounded-full overflow-hidden">
+                <div id="energyBar" class="h-full bg-cyan-400 shadow-[0_0_15px_#00d2ff]"></div>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-3">
+            <button onclick="openUpgrades()" class="btn-neon py-3 text-xs uppercase">Upgrades</button>
+            <button onclick="toggleSecret(true)" class="bg-white/10 py-3 rounded-xl text-xs font-bold border border-white/10 uppercase">Profile</button>
+        </div>
     </footer>
 </div>
 
 <div id="secretScreen">
-    <div class="flex justify-between mb-8">
-        <h2 class="text-cyan-400 font-black">CYBER PROFILE</h2>
-        <button onclick="closeSecret()" class="text-2xl font-bold">✕</button>
-    </div>
-    
-    <div class="flex flex-col items-center mb-10">
-        <img id="uAvatar" src="" class="w-20 h-20 rounded-full border-2 border-cyan-400 mb-2">
-        <div id="uName" class="font-black text-lg">GUEST</div>
+    <div class="flex justify-between items-center mb-8">
+        <button onclick="toggleSecret(false)" class="text-2xl">×</button>
+        <h2 class="font-black text-cyan-400 tracking-widest">CYBER PROFILE</h2>
+        <div class="w-8"></div>
     </div>
 
-    <div id="ton-connect-button"></div>
-    
-    <div class="mt-10 space-y-4">
-        <div class="glass p-4 flex justify-between"><span>TON BALANCE</span><span id="tonBal">0.00</span></div>
-        <button onclick="window.location.reload()" class="w-full text-xs opacity-50">SYNC DATA</button>
+    <div class="flex flex-col items-center mb-8">
+        <div class="relative">
+            <img id="userAvatar" src="https://via.placeholder.com/100" class="w-24 h-24 rounded-full border-4 border-cyan-400 p-1 mb-4 shadow-[0_0_30px_#00d2ff]">
+            <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-cyan-400 text-black text-[10px] font-bold px-3 py-1 rounded-full" id="profileLvl">LVL 1</div>
+        </div>
+        <h3 id="userName" class="text-xl font-black mb-1">GUEST USER</h3>
+        <p class="text-[10px] text-cyan-400 opacity-60 uppercase tracking-widest">Master of Matisov X</p>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 mb-6">
+        <div class="glass-panel text-center">
+            <div class="text-[10px] opacity-60">BALANCE MX</div>
+            <div class="text-lg font-black text-white" id="profileBal">0</div>
+        </div>
+        <div class="glass-panel text-center">
+            <div class="text-[10px] text-blue-400">TON WALLET</div>
+            <div class="text-lg font-black text-white" id="profileTon">0.00</div>
+        </div>
+    </div>
+
+    <div class="space-y-3">
+        <button onclick="walletAction('deposit')" class="w-full py-4 btn-neon">DEPOSIT TON</button>
+        <button onclick="walletAction('withdraw')" class="w-full py-4 bg-white/5 border border-white/20 rounded-2xl font-black text-sm">WITHDRAW TON</button>
+    </div>
+
+    <div class="mt-auto pt-6 text-center">
+        <div class="text-[9px] opacity-40 mb-2 uppercase">Your Progress to Next Level</div>
+        <div class="h-1 bg-gray-800 rounded-full w-full mb-8 overflow-hidden">
+            <div id="levelBar" class="h-full bg-cyan-400 w-0"></div>
+        </div>
     </div>
 </div>
 
-<div id="hubModal">
-    <div class="flex justify-between mb-6">
-        <h2 class="text-cyan-400 font-black">HUB</h2>
-        <button onclick="closeHub()" class="text-2xl">✕</button>
+<div id="upgradeModal" class="fixed inset-0 bg-black/90 z-[300] hidden flex-col p-6 overflow-y-auto">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="font-black text-cyan-400 text-xl uppercase">Hub</h2>
+        <button onclick="document.getElementById('upgradeModal').style.display='none'" class="text-2xl">×</button>
     </div>
 
-    <div class="overflow-y-auto space-y-6">
-        <section>
-            <h3 class="text-[10px] text-gray-400 mb-3 tracking-widest">TASKS (VERIFIED)</h3>
-            <div id="taskList" class="space-y-2"></div>
-        </section>
+    <div class="space-y-4">
+        <h3 class="text-xs text-blue-400 font-bold uppercase tracking-widest border-b border-white/10 pb-1">Upgrades</h3>
+        
+        <div id="upgradesList" class="space-y-3"></div>
 
-        <section>
-            <h3 class="text-[10px] text-gray-400 mb-3 tracking-widest">CYBER UPGRADES</h3>
-            <div id="upgList" class="space-y-2"></div>
-        </section>
+        <h3 class="text-xs text-yellow-500 font-bold uppercase tracking-widest border-b border-white/10 pb-1 mt-6">Cyber Tasks</h3>
+        <div id="tasksList" class="space-y-3"></div>
     </div>
 </div>
 
 <script>
 const TG = window.Telegram.WebApp;
 const UID = TG.initDataUnsafe?.user?.id || "guest";
-TG.expand();
 
-// TON Connect Init
-const tonConnectUI = new TONConnectUI.TonConnectUI({
-    manifestUrl: 'https://raw.githubusercontent.com/ton-connect/demo-dapp/main/public/tonconnect-manifest.json',
-    buttonRootId: 'ton-connect-button'
-});
-
+// 1. Initial State
 let state = {
-    bal: parseInt(localStorage.getItem('mx_bal_'+UID)) || 0,
-    e: 1000,
-    lvl: 1,
-    hnd: parseInt(localStorage.getItem('mx_hnd_'+UID)) || 0,
-    swd: parseInt(localStorage.getItem('mx_swd_'+UID)) || 0,
-    ton_connected: localStorage.getItem('mx_ton_con_'+UID) === 'true',
-    tasks: JSON.parse(localStorage.getItem('mx_tsk_'+UID)) || []
+    bal: parseFloat(localStorage.getItem(`mx_bal_${UID}`)) || 0,
+    ton: parseFloat(localStorage.getItem(`mx_ton_${UID}`)) || 0.0,
+    lvl: parseInt(localStorage.getItem(`mx_lvl_${UID}`)) || 1,
+    hnd: parseInt(localStorage.getItem(`mx_hnd_${UID}`)) || 0, // Hands
+    swd: parseInt(localStorage.getItem(`mx_swd_${UID}`)) || 0, // Sword
+    ai: parseInt(localStorage.getItem(`mx_ai_${UID}`)) || 0,   // AI Super Power
+    e: parseInt(localStorage.getItem(`mx_ene_${UID}`)) || 1000,
+    tasks: JSON.parse(localStorage.getItem(`mx_tsk_${UID}`)) || []
 };
 
-const TASKS = [
-    { id: 'tg_ch', title: 'Join Channel', reward: 1000000, link: 'https://t.me/Matisov_X' },
-    { id: 'tg_group', title: 'Join Chat', reward: 1000000, link: 'https://t.me/MatisovX' },
-    { id: 'yt', title: 'Subscribe YouTube', reward: 1000000, link: 'https://youtube.com/@MatisovX' },
-    { id: 'ton_con', title: 'Connect TON Wallet', reward: 100000, link: '#' }
-];
+// 2. Constants & Balance
+const CONFIG = {
+    baseUpgradeCost: 5000,
+    tasks: [
+        { id: 'tg_ch', title: 'Join Channel', reward: 1000000, url: 'https://t.me/Matisov_X' },
+        { id: 'tg_chat', title: 'Join Chat', reward: 1000000, url: 'https://t.me/MatisovX' },
+        { id: 'yt', title: 'YouTube Subscribe', reward: 1000000, url: 'https://www.youtube.com/@MatisovX' },
+        { id: 'inst', title: 'Instagram Follow', reward: 1000000, url: 'https://www.instagram.com/matisov.x' },
+        { id: 'tw', title: 'X (Twitter) Follow', reward: 1000000, url: 'https://x.com/matisovx' }
+    ]
+};
 
-function save() {
-    localStorage.setItem('mx_bal_'+UID, state.bal);
-    localStorage.setItem('mx_hnd_'+UID, state.hnd);
-    localStorage.setItem('mx_swd_'+UID, state.swd);
-    localStorage.setItem('mx_tsk_'+UID, JSON.stringify(state.tasks));
+// 3. Logic & Formulas
+const getMaxEnergy = () => 1000 + (state.hnd * 200);
+const getRegenRate = () => 2 + (state.hnd * 1);
+const getTapPower = () => (1 + state.swd) * (1 + state.ai);
+const getExpToNext = () => Math.floor(100000 * Math.pow(1.5, state.lvl - 1));
+const getUpgradeCost = (lvl) => Math.floor(CONFIG.baseUpgradeCost * Math.pow(2.2, lvl));
+
+function formatNum(num) {
+    if (num >= 1000000) return (num / 1000000).toFixed(2) + "M";
+    if (num >= 1000) return (num / 1000).toFixed(1) + "K";
+    return Math.floor(num).toLocaleString();
 }
 
-function render() {
-    document.getElementById('balText').textContent = state.bal.toLocaleString();
-    document.getElementById('eneText').textContent = `${state.e}/${1000 + (state.hnd * 200)}`;
-    document.getElementById('eneBar').style.width = (state.e / (1000 + (state.hnd * 200)) * 100) + "%";
-    
-    if(TG.initDataUnsafe?.user) {
-        document.getElementById('uName').textContent = TG.initDataUnsafe.user.first_name;
-        document.getElementById('uAvatar').src = TG.initDataUnsafe.user.photo_url || '';
+function updateLevel() {
+    const exp = getExpToNext();
+    if (state.bal >= exp) {
+        state.bal -= exp;
+        state.lvl++;
+        TG.HapticFeedback.notificationOccurred('success');
+        updateLevel(); // Recursive check
     }
 }
 
-// Logic: Tasks
-function openHub() {
-    document.getElementById('hubModal').style.display = 'flex';
-    const list = document.getElementById('taskList');
-    list.innerHTML = TASKS.map(t => {
-        const isDone = state.tasks.includes(t.id);
+// 4. UI Rendering
+function render() {
+    updateLevel();
+    const maxE = getMaxEnergy();
+    const exp = getExpToNext();
+    const prog = (state.bal / exp) * 100;
+
+    // Main UI
+    document.getElementById('mainBal').textContent = formatNum(state.bal);
+    document.getElementById('energyText').textContent = `${state.e} / ${maxE}`;
+    document.getElementById('energyBar').style.width = (state.e / maxE * 100) + "%";
+    document.getElementById('headerLevel').textContent = `LVL ${state.lvl}`;
+    document.getElementById('headerProgress').style.width = prog + "%";
+
+    // Secret Screen
+    document.getElementById('profileBal').textContent = formatNum(state.bal);
+    document.getElementById('profileTon').textContent = state.ton.toFixed(2);
+    document.getElementById('profileLvl').textContent = `LVL ${state.lvl}`;
+    document.getElementById('levelBar').style.width = prog + "%";
+    
+    // Telegram User Data
+    if (TG.initDataUnsafe?.user) {
+        const u = TG.initDataUnsafe.user;
+        document.getElementById('userName').textContent = (u.username || u.first_name).toUpperCase();
+        if (u.photo_url) document.getElementById('userAvatar').src = u.photo_url;
+    }
+
+    save();
+}
+
+// 5. Actions
+function handleTap(e) {
+    const touches = e.changedTouches || [e];
+    for (let i = 0; i < touches.length; i++) {
+        if (state.e <= 0) {
+            TG.HapticFeedback.notificationOccurred('error');
+            break;
+        }
+        
+        state.e--;
+        const power = getTapPower();
+        state.bal += power;
+
+        // Visuals
+        const t = document.createElement('div');
+        t.className = 'tap-text';
+        t.style.left = touches[i].clientX + 'px';
+        t.style.top = touches[i].clientY + 'px';
+        t.textContent = `+${power}`;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 600);
+
+        // Hero Animate
+        const container = document.getElementById('heroContainer');
+        container.style.transform = 'translateX(-50%) scale(0.95) rotate(-2deg)';
+        setTimeout(() => container.style.transform = 'translateX(-50%) scale(1) rotate(0)', 50);
+    }
+    TG.HapticFeedback.impactOccurred('medium');
+    render();
+}
+
+function buyUpgrade(key) {
+    const cost = getUpgradeCost(state[key]);
+    if (state.bal >= cost) {
+        state.bal -= cost;
+        state[key]++;
+        TG.HapticFeedback.notificationOccurred('success');
+        openUpgrades(); // Refresh list
+        render();
+    }
+}
+
+function openUpgrades() {
+    const modal = document.getElementById('upgradeModal');
+    modal.style.display = 'flex';
+    
+    const upgDiv = document.getElementById('upgradesList');
+    const items = [
+        { key: 'hnd', name: 'Hyper Cyber Hands', desc: 'Max Energy & Recovery' },
+        { key: 'swd', name: 'Sword Power', desc: 'MX per tap' },
+        { key: 'ai', name: 'AI Super Power', desc: 'Multi-tap Multiplier' }
+    ];
+
+    upgDiv.innerHTML = items.map(i => {
+        const cost = getUpgradeCost(state[i.key]);
+        const canBuy = state.bal >= cost;
         return `
-        <div class="glass p-3 flex justify-between items-center">
-            <div><div class="text-xs font-bold">${t.title}</div><div class="text-[9px] text-green-400">+${t.reward.toLocaleString()} MX</div></div>
-            ${isDone ? '<span class="text-green-500 text-xs">✔</span>' : 
-            `<button onclick="verifyTask('${t.id}')" class="bg-white text-black text-[10px] px-3 py-1 rounded-full font-bold">GO</button>`}
-        </div>`;
+            <div class="glass-panel flex justify-between items-center">
+                <div>
+                    <div class="text-sm font-black uppercase">${i.name}</div>
+                    <div class="text-[9px] text-cyan-400">LVL ${state[i.key]} • ${i.desc}</div>
+                </div>
+                <button onclick="buyUpgrade('${i.key}')" ${canBuy ? '' : 'disabled'} class="${canBuy ? 'btn-neon' : 'bg-gray-800 text-gray-500'} text-[10px] px-4 py-2">
+                    ${formatNum(cost)}
+                </button>
+            </div>
+        `;
+    }).join('');
+
+    const taskDiv = document.getElementById('tasksList');
+    taskDiv.innerHTML = CONFIG.tasks.map(t => {
+        const done = state.tasks.includes(t.id);
+        return `
+            <div class="glass-panel flex justify-between items-center bg-yellow-500/5 border-yellow-500/20">
+                <div>
+                    <div class="text-[10px] font-bold">${t.title}</div>
+                    <div class="text-[9px] text-yellow-500">+${formatNum(t.reward)} MX</div>
+                </div>
+                <button onclick="completeTask('${t.id}', ${t.reward}, '${t.url}')" ${done ? 'disabled' : ''} class="${done ? 'opacity-30' : 'bg-yellow-500'} text-black text-[10px] px-4 py-2 rounded-lg font-bold">
+                    ${done ? 'DONE' : 'GO'}
+                </button>
+            </div>
+        `;
     }).join('');
 }
 
-function verifyTask(id) {
-    const task = TASKS.find(t => t.id === id);
-    if(id === 'ton_con') {
-        if(tonConnectUI.connected) {
-            claimTask(id, task.reward);
-        } else {
-            TG.showAlert("Please connect your wallet in Profile first!");
+function completeTask(id, reward, url) {
+    TG.openLink(url);
+    setTimeout(() => {
+        if (!state.tasks.includes(id)) {
+            state.tasks.push(id);
+            state.bal += reward;
+            TG.HapticFeedback.notificationOccurred('success');
+            openUpgrades();
+            render();
         }
-    } else {
-        TG.openLink(task.link);
-        // Імітація перевірки через "Verification"
-        setTimeout(() => {
-            TG.showConfirm("Did you subscribe?", (ok) => {
-                if(ok) claimTask(id, task.reward);
-            });
-        }, 2000);
-    }
+    }, 2000);
 }
 
-function claimTask(id, reward) {
-    if(!state.tasks.includes(id)) {
-        state.tasks.push(id);
-        state.bal += reward;
-        save(); render(); openHub();
-        TG.HapticFeedback.notificationOccurred('success');
-    }
+function toggleSecret(show) {
+    document.getElementById('secretScreen').style.display = show ? 'flex' : 'none';
+    TG.HapticFeedback.impactOccurred('light');
 }
 
-// Logic: Taps
-document.getElementById('tapArea').addEventListener('touchstart', (e) => {
+function walletAction(type) {
+    TG.HapticFeedback.impactOccurred('heavy');
+    alert(type === 'deposit' ? 'Connecting to TON Wallet...' : 'Insufficient TON balance for withdrawal.');
+}
+
+function save() {
+    localStorage.setItem(`mx_bal_${UID}`, state.bal);
+    localStorage.setItem(`mx_ton_${UID}`, state.ton);
+    localStorage.setItem(`mx_lvl_${UID}`, state.lvl);
+    localStorage.setItem(`mx_hnd_${UID}`, state.hnd);
+    localStorage.setItem(`mx_swd_${UID}`, state.swd);
+    localStorage.setItem(`mx_ai_${UID}`, state.ai);
+    localStorage.setItem(`mx_ene_${UID}`, state.e);
+    localStorage.setItem(`mx_tsk_${UID}`, JSON.stringify(state.tasks));
+}
+
+// 6. Init
+document.getElementById('tapZone').addEventListener('touchstart', (e) => {
     e.preventDefault();
-    if(state.e <= 0) return;
-    
-    Array.from(e.changedTouches).forEach(touch => {
-        state.e--;
-        const gain = 1 + state.swd;
-        state.bal += gain;
-        
-        const txt = document.createElement('div');
-        txt.className = 'tap-text';
-        txt.style.left = touch.clientX + 'px';
-        txt.style.top = touch.clientY + 'px';
-        txt.textContent = `+${gain}`;
-        document.body.appendChild(txt);
-        setTimeout(() => txt.remove(), 700);
-        
-        document.getElementById('hero').style.transform = 'scale(0.95)';
-        setTimeout(() => document.getElementById('hero').style.transform = 'scale(1)', 50);
-    });
-    render(); save();
-    TG.HapticFeedback.impactOccurred('medium');
-});
-
-// Navigation
-function openSecret() { document.getElementById('secretScreen').style.display = 'flex'; }
-function closeSecret() { document.getElementById('secretScreen').style.display = 'none'; }
-function closeHub() { document.getElementById('hubModal').style.display = 'none'; }
-
-// Wallet Sync
-tonConnectUI.onStatusChange(wallet => {
-    if (wallet) {
-        state.ton_connected = true;
-        localStorage.setItem('mx_ton_con_'+UID, 'true');
-    }
-});
+    handleTap(e);
+}, { passive: false });
 
 setInterval(() => {
-    const max = 1000 + (state.hnd * 200);
-    if(state.e < max) { state.e = Math.min(max, state.e + 3); render(); }
+    const maxE = getMaxEnergy();
+    if (state.e < maxE) {
+        state.e = Math.min(maxE, state.e + getRegenRate());
+        render();
+    }
 }, 1500);
 
 render();
 </script>
+
 </body>
 </html>
