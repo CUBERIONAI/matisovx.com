@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -18,35 +18,38 @@ body{margin:0;background:radial-gradient(circle at 50% 30%, #0b2a44, var(--bg));
 .tap-text{position:absolute;font-size:2.4rem;font-weight:900;color:var(--neon);pointer-events:none;animation:float .6s forwards;text-shadow:0 0 20px var(--neon);}
 @keyframes float{to{transform:translateY(-200px) scale(1.6);opacity:0}}
 .spark{position:absolute;width:5px;height:5px;background:var(--neon);border-radius:50%;box-shadow:0 0 10px var(--neon);pointer-events:none;}
-#upgradeMenu{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-blur:10px;z-index:50;display:none;justify-content:center;align-items:center;}
-.upgrade-panel{background:#0b1a2a;border-radius:2rem;width:100%;max-width:480px;padding:2rem;position:relative;}
-.upgrade-panel h2{text-align:center;color:#00d2ff;font-weight:900;font-size:2rem;margin-bottom:1rem;}
+#upgradeMenu,#matisovScreen{position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-blur:12px;z-index:50;display:none;justify-content:center;align-items:center;}
+.upgrade-panel,#matisovScreen .panel{background:#0b1a2a;border-radius:2rem;width:100%;max-width:480px;padding:2rem;position:relative;}
+.upgrade-panel h2,#matisovScreen h2{text-align:center;color:#00d2ff;font-weight:900;font-size:2rem;margin-bottom:1rem;}
 .upgrade-card{background:#05111f;padding:1rem;border-radius:1.5rem;display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;}
 .upgrade-card button{background:#00d2ff;color:black;font-weight:bold;padding:0.3rem 0.8rem;border-radius:1rem;font-size:0.85rem;}
 .upgrade-card span{font-size:0.75rem;color:#fff;opacity:0.7;}
-#closeMenu{position:absolute;top:0.5rem;right:1rem;font-size:1.5rem;font-weight:bold;color:red;cursor:pointer;}
+#closeMenu,#closeMatisov{position:absolute;top:0.5rem;right:1rem;font-size:1.5rem;font-weight:bold;color:red;cursor:pointer;}
+#matisovScreen .panel img{width:96px;height:96px;border-radius:50%;margin-bottom:0.5rem;}
+#matisovScreen .panel button{background:#00d2ff;color:black;font-weight:bold;padding:0.5rem 1rem;border-radius:1rem;margin-top:0.5rem;}
 </style>
 </head>
 <body>
+
 <header class="p-6 flex justify-between items-center">
 <h1 class="text-2xl font-black text-cyan-400">Matisov X</h1>
 <div>
-<div class="text-xs text-blue-400 uppercase tracking-widest">Network Balance</div>
-<div class="text-3xl font-black italic">
-<span id="bal">0</span><span class="text-blue-400 text-lg">MX</span>
-</div>
+<div class="text-xs text-blue-400 uppercase tracking-widest">Баланс</div>
+<div class="text-3xl font-black italic"><span id="bal">0</span> <span class="text-blue-400 text-lg">MX</span></div>
 </div>
 </header>
+
 <main class="viewport" id="tapZone">
 <div class="cyber-floor"></div>
 <div class="hero-wrap">
 <img id="hero" src="https://raw.githubusercontent.com/CUBERIONAI/Matisov-X/main/file_0000000008b471f48ebdb6f35b1b1a5a.png">
 </div>
 </main>
+
 <div class="px-6 -mt-10">
 <div class="bg-black/60 backdrop-blur-xl rounded-3xl p-5 border border-white/10">
 <div class="flex justify-between text-xs mb-2">
-<span>⚡ Energy</span>
+<span>⚡ Енергія</span>
 <span id="energyText">0 / 0</span>
 </div>
 <div class="h-3 bg-black rounded-full overflow-hidden">
@@ -60,7 +63,6 @@ body{margin:0;background:radial-gradient(circle at 50% 30%, #0b2a44, var(--bg));
 <div class="upgrade-panel">
 <h2>Меню Прокачки</h2>
 <button id="closeMenu">×</button>
-
 <div class="upgrade-card">
 <div>
 <strong>Гіпер кібер руки</strong>
@@ -72,7 +74,6 @@ body{margin:0;background:radial-gradient(circle at 50% 30%, #0b2a44, var(--bg));
 <span id="handsCost">Вартість: 5,000 MX</span>
 </div>
 </div>
-
 <div class="upgrade-card">
 <div>
 <strong>Сила меча</strong>
@@ -84,7 +85,6 @@ body{margin:0;background:radial-gradient(circle at 50% 30%, #0b2a44, var(--bg));
 <span id="swordCost">Вартість: 5,000 MX</span>
 </div>
 </div>
-
 <div class="upgrade-card">
 <div>
 <strong>Супер сили AI</strong>
@@ -99,21 +99,38 @@ body{margin:0;background:radial-gradient(circle at 50% 30%, #0b2a44, var(--bg));
 </div>
 </div>
 
+<!-- Matisov Secret Screen -->
+<div id="matisovScreen">
+<div class="panel">
+<h2>Matisov X</h2>
+<img id="userAvatar" src="">
+<div id="userName"></div>
+<div id="userId"></div>
+<div id="progress">Рівень: 0 | TON: 0</div>
+<button id="addTON">Поповнити TON</button>
+<button id="closeMatisov">×</button>
+</div>
+</div>
+
 <script>
-// Telegram expand
+// Telegram WebApp
 Telegram.WebApp.expand();
 const tgUser = Telegram.WebApp.initDataUnsafe?.user;
 const UID = tgUser ? tgUser.id : "guest";
+const AVATAR = tgUser?.photo_url || "https://via.placeholder.com/100";
+const NAME = tgUser?.first_name || "Guest";
+const USERNAME = tgUser?.username ? "@"+tgUser.username : "";
 
-// CONFIG
+// Config
 const cfg={tap:1,maxE:1000,regen:3};
-const storageKeys={hands:'upgradeHands', sword:'upgradeSword', magic:'upgradeMagic'};
 let st={
 bal:parseInt(localStorage.getItem(`mxBalance_${UID}`))||0,
 e:cfg.maxE,
 hands:parseInt(localStorage.getItem(`upgradeHands_${UID}`))||0,
 sword:parseInt(localStorage.getItem(`upgradeSword_${UID}`))||0,
-magic:parseInt(localStorage.getItem(`upgradeMagic_${UID}`))||0
+magic:parseInt(localStorage.getItem(`upgradeMagic_${UID}`))||0,
+level:parseInt(localStorage.getItem(`level_${UID}`))||1,
+ton:parseInt(localStorage.getItem(`ton_${UID}`))||0
 };
 
 const hero=document.getElementById('hero');
@@ -126,10 +143,8 @@ function tap(e){
 e.preventDefault();
 if(st.e<cfg.tap) return;
 const t=e.touches? e.touches[0] : e;
-let multiTap=st.magic+1;
-let gain=(cfg.tap + st.sword)*multiTap;
-st.e-=cfg.tap;
-st.bal+=gain;
+let gain=(cfg.tap+st.sword)*(st.magic+1);
+st.e-=cfg.tap; st.bal+=gain;
 hero.style.transform="scale(.9) rotate(-3deg)";
 setTimeout(()=>hero.style.transform="",120);
 fx(t.clientX,t.clientY,gain);
@@ -139,21 +154,18 @@ save(); render();
 
 function fx(x,y,amt){
 const txt=document.createElement('div'); txt.className='tap-text';
-txt.style.left=x+'px'; txt.style.top=y+'px';
-txt.textContent='+'+amt+' MX';
-document.body.appendChild(txt);
-setTimeout(()=>txt.remove(),600);
+txt.style.left=x+'px'; txt.style.top=y+'px'; txt.textContent='+'+amt+' MX';
+document.body.appendChild(txt); setTimeout(()=>txt.remove(),600);
 for(let i=0;i<8;i++){
 const s=document.createElement('div'); s.className='spark';
 s.style.left=x+'px'; s.style.top=y+'px';
 document.body.appendChild(s);
-const dx=(Math.random()-.5)*300;
-const dy=(Math.random()-.5)*300;
+const dx=(Math.random()-.5)*300, dy=(Math.random()-.5)*300;
 s.animate([{transform:'translate(0,0)',opacity:1},{transform:`translate(${dx}px,${dy}px)`,opacity:0}],{duration:500}).onfinish=()=>s.remove();
 }
 }
 
-// Energy regen
+// Regen
 setInterval(()=>{
 st.e=Math.min(cfg.maxE+st.hands*50,st.e+cfg.regen+st.hands*5);
 render();
@@ -169,6 +181,10 @@ document.getElementById('swordLevel').textContent=`Рівень: ${st.sword}`;
 document.getElementById('swordEffect').textContent=`+${st.sword+1} MX/тап`;
 document.getElementById('magicLevel').textContent=`Рівень: ${st.magic}`;
 document.getElementById('magicEffect').textContent=`Мульти-тап: ×${st.magic+1}`;
+document.getElementById('userAvatar').src=AVATAR;
+document.getElementById('userName').textContent=NAME;
+document.getElementById('userId').textContent=USERNAME;
+document.getElementById('progress').textContent=`Рівень: ${st.level} | TON: ${st.ton}`;
 }
 
 function save(){
@@ -176,22 +192,26 @@ localStorage.setItem(`mxBalance_${UID}`,st.bal);
 localStorage.setItem(`upgradeHands_${UID}`,st.hands);
 localStorage.setItem(`upgradeSword_${UID}`,st.sword);
 localStorage.setItem(`upgradeMagic_${UID}`,st.magic);
+localStorage.setItem(`level_${UID}`,st.level);
+localStorage.setItem(`ton_${UID}`,st.ton);
 }
 
 // Upgrades
-document.getElementById('handsBtn').onclick=()=>{
-if(st.bal>=5000){ st.bal-=5000; st.hands++; save(); render();}
-};
-document.getElementById('swordBtn').onclick=()=>{
-if(st.bal>=5000){ st.bal-=5000; st.sword++; save(); render();}
-};
-document.getElementById('magicBtn').onclick=()=>{
-if(st.bal>=10000){ st.bal-=10000; st.magic++; save(); render();}
-};
+document.getElementById('handsBtn').onclick=()=>{if(st.bal>=5000){st.bal-=5000; st.hands++; save(); render();}};
+document.getElementById('swordBtn').onclick=()=>{if(st.bal>=5000){st.bal-=5000; st.sword++; save(); render();}};
+document.getElementById('magicBtn').onclick=()=>{if(st.bal>=10000){st.bal-=10000; st.magic++; save(); render();}};
 
-// Upgrade menu toggle
+// Upgrade menu
 document.getElementById('closeMenu').onclick=()=>upgradeMenu.style.display='none';
 document.querySelector('header h1').onclick=()=>upgradeMenu.style.display='flex';
+
+// Secret Matisov screen toggle
+document.querySelector('header h1').ondblclick=()=>matisovScreen.style.display='flex';
+document.getElementById('closeMatisov').onclick=()=>matisovScreen.style.display='none';
+document.getElementById('addTON').onclick=()=>{
+let t=parseInt(prompt("Введіть TON для поповнення:")); 
+if(!isNaN(t)&&t>0){st.ton+=t; save(); render();}
+};
 
 render();
 </script>
