@@ -24,146 +24,69 @@ body{
   overflow:hidden;
 }
 
-/* ===== SCENE ===== */
-.viewport{
-  position:relative;
-  height:60vh;
-  overflow:hidden;
-}
-
+.viewport{position:relative;height:60vh;overflow:hidden;}
 .cyber-floor{
-  position:absolute;
-  bottom:-60%;
-  left:-50%;
-  width:200%;
-  height:200%;
+  position:absolute;bottom:-60%;left:-50%;
+  width:200%;height:200%;
   background:
     linear-gradient(var(--neon) 1px, transparent 1px),
     linear-gradient(90deg,var(--neon) 1px, transparent 1px);
   background-size:80px 80px;
-  opacity:.15;
-  transform:rotateX(70deg);
+  opacity:.15;transform:rotateX(70deg);
 }
-
-/* ===== HERO ===== */
 .hero-wrap{
-  position:absolute;
-  bottom:6%;
-  left:50%;
+  position:absolute;bottom:6%;left:50%;
   transform:translateX(-50%);
   filter:drop-shadow(0 0 40px var(--neon));
 }
+#hero{height:52vh;animation:idle 3s ease-in-out infinite;}
+@keyframes idle{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
 
-#hero{
-  height:52vh;
-  transition:transform .12s ease;
-  animation:idle 3s ease-in-out infinite;
-}
-
-@keyframes idle{
-  0%,100%{transform:translateY(0)}
-  50%{transform:translateY(-12px)}
-}
-
-/* ===== TAP FX ===== */
 .tap-text{
-  position:absolute;
-  font-size:2.4rem;
-  font-weight:900;
-  color:var(--neon);
-  pointer-events:none;
+  position:absolute;font-size:2.2rem;font-weight:900;
+  color:var(--neon);pointer-events:none;
   animation:float .6s forwards;
-  text-shadow:0 0 20px var(--neon);
 }
+@keyframes float{to{transform:translateY(-180px) scale(1.4);opacity:0}}
 
-@keyframes float{
-  to{transform:translateY(-200px) scale(1.6);opacity:0}
-}
-
-.spark{
-  position:absolute;
-  width:5px;height:5px;
-  background:var(--neon);
-  border-radius:50%;
-  box-shadow:0 0 10px var(--neon);
-  pointer-events:none;
-}
-
-/* ===== UPGRADE MENU ===== */
 #upgradeMenu{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,0.7);
-  backdrop-blur:10px;
-  z-index:50;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  padding:1rem;
-  display:none;
+  position:fixed;inset:0;background:rgba(0,0,0,0.75);
+  backdrop-blur:10px;z-index:50;
+  display:none;justify-content:center;align-items:center;
 }
-
 .upgrade-panel{
-  background:#0b1a2a;
-  border-radius:2rem;
-  width:100%;
-  max-width:480px;
-  padding:2rem;
-  position:relative;
+  background:#0b1a2a;border-radius:2rem;
+  width:100%;max-width:520px;padding:2rem;
 }
-
-.upgrade-panel h2{
-  text-align:center;
-  color:#00d2ff;
-  font-weight:900;
-  font-size:2rem;
-  margin-bottom:1rem;
-}
-
 .upgrade-card{
-  background:#05111f;
-  padding:1rem;
+  background:#05111f;padding:1rem;
   border-radius:1.5rem;
-  display:flex;
-  justify-content:space-between;
+  display:flex;justify-content:space-between;
   align-items:center;
   margin-bottom:1rem;
 }
-
 .upgrade-card button{
-  background:#00d2ff;
-  color:black;
-  font-weight:bold;
-  padding:0.3rem 0.8rem;
+  background:#00d2ff;color:black;
+  font-weight:bold;border-radius:1rem;
+  padding:0.4rem 1rem;
+}
+.task{
+  border:1px dashed #00d2ff;
+  padding:0.7rem;
   border-radius:1rem;
-  font-size:0.85rem;
-}
-.upgrade-card span{
-  font-size:0.75rem;
-  color:#fff;
-  opacity:0.7;
-}
-
-#closeMenu{
-  position:absolute;
-  top:0.5rem;
-  right:1rem;
-  font-size:1.5rem;
-  font-weight:bold;
-  color:red;
-  cursor:pointer;
+  margin-bottom:0.6rem;
+  font-size:0.8rem;
 }
 </style>
 </head>
 <body>
 
 <header class="p-6 flex justify-between items-center">
-  <h1 class="text-2xl font-black text-cyan-400">Matisov X</h1>
+  <h1 class="text-2xl font-black text-cyan-400 cursor-pointer">Matisov X</h1>
   <div>
-    <div class="text-xs text-blue-400 uppercase tracking-widest">Network Balance</div>
-    <div class="text-3xl font-black italic">
-      <span id="bal">5,046,656</span>
-      <span class="text-blue-400 text-lg">MX</span>
+    <div class="text-xs text-blue-400 uppercase">Balance</div>
+    <div class="text-3xl font-black">
+      <span id="bal">0</span> MX
     </div>
   </div>
 </header>
@@ -176,194 +99,136 @@ body{
 </main>
 
 <div class="px-6 -mt-10">
-  <div class="bg-black/60 backdrop-blur-xl rounded-3xl p-5 border border-white/10">
+  <div class="bg-black/60 rounded-3xl p-5">
     <div class="flex justify-between text-xs mb-2">
       <span>⚡ Energy</span>
-      <span id="energyText">1000 / 1000</span>
+      <span id="energyText"></span>
     </div>
-    <div class="h-3 bg-black rounded-full overflow-hidden">
-      <div id="energyBar" class="h-full bg-gradient-to-r from-cyan-400 to-blue-600"></div>
+    <div class="h-3 bg-black rounded-full">
+      <div id="energyBar" class="h-full bg-cyan-400"></div>
     </div>
   </div>
 </div>
 
-<!-- Upgrade Menu -->
+<!-- MENU -->
 <div id="upgradeMenu">
   <div class="upgrade-panel">
-    <h2>Меню Прокачки</h2>
-    <button id="closeMenu">×</button>
+    <h2 class="text-center text-cyan-400 text-2xl mb-4">Menu</h2>
 
     <div class="upgrade-card">
       <div>
-        <strong>Гіпер кібер руки</strong>
-        <p id="handsEffect" class="text-xs text-white/70">Макс енергія: 0</p>
-        <p id="handsLevel" class="text-xs text-white/50">Рівень: 0</p>
+        <strong>Cyber Hands</strong>
+        <p id="handsLevel"></p>
+        <p class="text-xs opacity-60">+50 Max Energy</p>
       </div>
-      <div>
-        <button id="handsBtn">Прокачати</button>
-        <span id="handsCost">Вартість: 5,000 MX</span>
-      </div>
+      <button id="handsBtn">Upgrade</button>
     </div>
 
     <div class="upgrade-card">
       <div>
-        <strong>Сила меча</strong>
-        <p id="swordEffect" class="text-xs text-white/70">+1 MX/тап</p>
-        <p id="swordLevel" class="text-xs text-white/50">Рівень: 0</p>
+        <strong>Sword Power</strong>
+        <p id="swordLevel"></p>
+        <p class="text-xs opacity-60">+MX per tap</p>
       </div>
-      <div>
-        <button id="swordBtn">Прокачати</button>
-        <span id="swordCost">Вартість: 5,000 MX</span>
-      </div>
+      <button id="swordBtn">Upgrade</button>
     </div>
 
-    <div class="upgrade-card">
-      <div>
-        <strong>Супер сили AI</strong>
-        <p id="magicEffect" class="text-xs text-white/70">Мульти-тап: ×1</p>
-        <p id="magicLevel" class="text-xs text-white/50">Рівень: 0</p>
-      </div>
-      <div>
-        <button id="magicBtn">Прокачати</button>
-        <span id="magicCost">Вартість: 10,000 MX</span>
-      </div>
-    </div>
+    <hr class="my-4 opacity-20">
+
+    <h3 class="text-sm text-cyan-400 mb-2">Tasks (real-time)</h3>
+
+    <div class="task">📢 Telegram Channel — +3,000,000 MX</div>
+    <div class="task">💬 Telegram Chat — +2,000,000 MX</div>
+    <div class="task">▶️ YouTube — +2,000,000 MX</div>
+    <div class="task">📸 Instagram — +1,000,000 MX</div>
+    <div class="task">❌ X (Twitter) — +2,000,000 MX</div>
+
+    <button onclick="upgradeMenu.style.display='none'" class="mt-4 w-full bg-red-500 rounded-xl py-2 font-bold">Close</button>
   </div>
 </div>
 
 <script>
-// Telegram expand
 Telegram.WebApp.expand();
+const tgUser = Telegram.WebApp.initDataUnsafe?.user;
+const UID = tgUser ? tgUser.id : "guest";
 
-const cfg={tap:1,maxE:1000,regen:3};
-let st={
-  bal:parseInt(localStorage.getItem('mxBalance'))||5046656,
-  e:1000
+// 🔐 UNIQUE STORAGE
+const KEY = {
+  bal: `mxBalance_${UID}`,
+  hands: `hands_${UID}`,
+  sword: `sword_${UID}`
 };
-const hero=document.getElementById('hero');
-const zone=document.getElementById('tapZone');
-zone.addEventListener('touchstart',tap,{passive:false});
-zone.addEventListener('mousedown',tap);
 
-function tap(e){
-  e.preventDefault();
-  if(st.e<cfg.tap)return;
-  const t=e.touches ? e.touches[0] : e;
-  let multiTap = upgrades.magic+1;
-  let gain = (cfg.tap + upgrades.sword) * multiTap;
+let state = {
+  bal: parseInt(localStorage.getItem(KEY.bal)) || 0,
+  e: 1000,
+  hands: parseInt(localStorage.getItem(KEY.hands)) || 0,
+  sword: parseInt(localStorage.getItem(KEY.sword)) || 0
+};
 
-  st.e-=cfg.tap;
-  st.bal+=gain;
+const tapZone = document.getElementById("tapZone");
 
-  hero.style.transform="scale(.9) rotate(-3deg)";
-  setTimeout(()=>hero.style.transform="",120);
+tapZone.addEventListener("click",(e)=>{
+  if(state.e<=0) return;
+  state.e--;
+  const gain = 1 + state.sword;
+  state.bal += gain;
 
-  fx(t.clientX,t.clientY,gain);
-  Telegram.WebApp.HapticFeedback?.impactOccurred("medium");
-  updateUI();
-}
-
-// FX
-function fx(x,y,amt){
-  const txt=document.createElement('div');
-  txt.className='tap-text';
-  txt.style.left=x+'px';
-  txt.style.top=y+'px';
-  txt.textContent='+'+amt+' MX';
+  const txt=document.createElement("div");
+  txt.className="tap-text";
+  txt.style.left=e.clientX+"px";
+  txt.style.top=e.clientY+"px";
+  txt.textContent="+"+gain+" MX";
   document.body.appendChild(txt);
   setTimeout(()=>txt.remove(),600);
 
-  for(let i=0;i<8;i++){
-    const s=document.createElement('div');
-    s.className='spark';
-    s.style.left=x+'px';
-    s.style.top=y+'px';
-    document.body.appendChild(s);
-    const dx=(Math.random()-.5)*300;
-    const dy=(Math.random()-.5)*300;
-    s.animate([{transform:'translate(0,0)',opacity:1},{transform:`translate(${dx}px,${dy}px)`,opacity:0}],{duration:500}).onfinish=()=>s.remove();
-  }
+  save(); render();
+});
+
+function save(){
+  localStorage.setItem(KEY.bal,state.bal);
+  localStorage.setItem(KEY.hands,state.hands);
+  localStorage.setItem(KEY.sword,state.sword);
 }
 
-// Energy regen
-setInterval(()=>{
-  if(st.e<cfg.maxE){
-    st.e=Math.min(cfg.maxE,st.e+cfg.regen+upgrades.hands*5);
-    updateUI();
+function render(){
+  bal.textContent=state.bal.toLocaleString();
+  const maxE=1000+state.hands*50;
+  energyText.textContent=`${state.e} / ${maxE}`;
+  energyBar.style.width=(state.e/maxE*100)+"%";
+  handsLevel.textContent=`Level: ${state.hands} (Cost ${(state.hands+1)*1_000_000} MX)`;
+  swordLevel.textContent=`Level: ${state.sword} (Cost ${(state.sword+1)*1_000_000} MX)`;
+}
+
+handsBtn.onclick=()=>{
+  const cost=(state.hands+1)*1_000_000;
+  if(state.bal>=cost){
+    state.bal-=cost;
+    state.hands++;
+    save();render();
   }
+};
+
+swordBtn.onclick=()=>{
+  const cost=(state.sword+1)*1_000_000;
+  if(state.bal>=cost){
+    state.bal-=cost;
+    state.sword++;
+    save();render();
+  }
+};
+
+setInterval(()=>{
+  state.e=Math.min(1000+state.hands*50,state.e+3);
+  render();
 },1000);
 
-function updateUI(){
-  document.getElementById('bal').textContent=st.bal.toLocaleString();
-  document.getElementById('energyText').textContent=`${st.e} / ${cfg.maxE + upgrades.hands*50}`;
-  document.getElementById('energyBar').style.width=((st.e/(cfg.maxE+upgrades.hands*50))*100)+'%';
-}
-
-// --- UPGRADE SYSTEM ---
-const storageKeys={
-  hands:'upgradeHands', sword:'upgradeSword', magic:'upgradeMagic'
+document.querySelector("header h1").onclick=()=>{
+  upgradeMenu.style.display="flex";
 };
 
-let upgrades={
-  hands:parseInt(localStorage.getItem(storageKeys.hands))||0,
-  sword:parseInt(localStorage.getItem(storageKeys.sword))||0,
-  magic:parseInt(localStorage.getItem(storageKeys.magic))||0
-};
-
-const baseCosts={hands:5000,sword:5000,magic:10000};
-
-const handsLevel=document.getElementById('handsLevel');
-const handsEffect=document.getElementById('handsEffect');
-const handsCost=document.getElementById('handsCost');
-const swordLevel=document.getElementById('swordLevel');
-const swordEffect=document.getElementById('swordEffect');
-const swordCost=document.getElementById('swordCost');
-const magicLevel=document.getElementById('magicLevel');
-const magicEffect=document.getElementById('magicEffect');
-const magicCost=document.getElementById('magicCost');
-
-function updateMenuUI(){
-  handsLevel.innerText=`Рівень: ${upgrades.hands}`;
-  handsEffect.innerText=`Макс енергія: +${upgrades.hands*50}`;
-  handsCost.innerText=`Вартість: ${baseCosts.hands*(upgrades.hands+1)} MX`;
-
-  swordLevel.innerText=`Рівень: ${upgrades.sword}`;
-  swordEffect.innerText=`+${upgrades.sword+1} MX/тап`;
-  swordCost.innerText=`Вартість: ${baseCosts.sword*(upgrades.sword+1)} MX`;
-
-  magicLevel.innerText=`Рівень: ${upgrades.magic}`;
-  magicEffect.innerText=`Мульти-тап: ×${upgrades.magic+1}`;
-  magicCost.innerText=`Вартість: ${baseCosts.magic*(upgrades.magic+1)} MX`;
-}
-
-function upgrade(stat){
-  let cost = baseCosts[stat]*(upgrades[stat]+1);
-  if(st.bal>=cost){
-    st.bal-=cost;
-    upgrades[stat]++;
-    localStorage.setItem(storageKeys[stat],upgrades[stat]);
-    localStorage.setItem('mxBalance',st.bal);
-    updateMenuUI();
-    updateUI();
-    alert(`Прокачка ${stat} успішна!`);
-  }else alert('Недостатньо MX!');
-}
-
-document.getElementById('handsBtn').addEventListener('click',()=>upgrade('hands'));
-document.getElementById('swordBtn').addEventListener('click',()=>upgrade('sword'));
-document.getElementById('magicBtn').addEventListener('click',()=>upgrade('magic'));
-
-const upgradeMenu=document.getElementById('upgradeMenu');
-document.getElementById('closeMenu').addEventListener('click',()=>upgradeMenu.style.display='none');
-
-function openUpgradeMenu(){upgradeMenu.style.display='flex';}
-
-// --- TEST: Open Menu by Tap Top Right ---
-document.querySelector('header h1').addEventListener('click',openUpgradeMenu);
-
-updateMenuUI();
-updateUI();
+render();
 </script>
 
 </body>
-  </html>
+</html>
